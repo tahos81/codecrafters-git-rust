@@ -20,7 +20,8 @@ fn main() {
         let mut d = ZlibDecoder::new(data.as_slice());
         let mut result = String::new();
         d.read_to_string(&mut result).unwrap();
-        print!("{}", result);
+        let header_index = result.find('\0').unwrap();
+        print!("{}", &result[header_index + 1..]);
     } else {
         println!("unknown command: {}", args[1])
     }
