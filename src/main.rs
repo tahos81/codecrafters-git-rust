@@ -1,6 +1,7 @@
-//use flate2;
+use flate2::read::ZlibDecoder;
 use std::env;
 use std::fs;
+use std::io::Read;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -15,9 +16,11 @@ fn main() {
         let dir_name = &blob_sha[..2];
         let file_name = &blob_sha[2..];
         let path = format!("./.git/objects/{}/{}", dir_name, file_name);
-        println!("{}", path);
         let data = fs::read(path).unwrap();
-        println!("{:?}", data);
+        let mut d = ZlibDecoder::new(data.as_slice());
+        let mut result = String::new();
+        d.read_to_string(&mut result).unwrap();
+        print!("{}", result);
     } else {
         println!("unknown command: {}", args[1])
     }
