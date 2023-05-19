@@ -45,10 +45,13 @@ fn cat_file(blob_sha: &str) {
 fn hash_object(file_name: &str) {
     let content = fs::read_to_string("./".to_string() + file_name).unwrap();
     let header = format!("blob {}\0", content.len());
-    let store = content + header.as_str();
+    let store = format!("{}{}", content, header);
     let mut hasher = Sha1::new();
     hasher.update(store.as_bytes());
     let res = hasher.finalize();
-    println!("{:?}", res);
-    println!("{:?}", hex::encode(res));
+    let blob_sha = hex::encode(res);
+    let dir_name = &blob_sha[..2];
+    let file_name = &blob_sha[2..];
+    let path = format!("./.git/objects/{}/{}", dir_name, file_name);
+    fs::write(path, content).unwrap();
 }
