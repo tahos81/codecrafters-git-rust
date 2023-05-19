@@ -45,8 +45,8 @@ fn cat_file(blob_sha: &str) {
 fn hash_object(file_name: &str) {
     let content = fs::read_to_string("./".to_string() + file_name).unwrap();
     let header = format!("blob {}\0", content.len());
-    let store = format!("{}{}", content, header);
-    print!("{}", store);
+    let store = format!("{}{}", header, content);
+    //print!("{}", store);
     let mut hasher = Sha1::new();
     hasher.update(store.as_bytes());
     let res = hasher.finalize();
