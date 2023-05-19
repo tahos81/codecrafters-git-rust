@@ -49,5 +49,6 @@ fn hash_object(file_name: &str) {
     let mut hasher = Sha1::new();
     hasher.update(store.as_bytes());
     let res = hasher.finalize();
+    println!("{:?}", res);
     println!("{:?}", hex::decode(res));
 }
