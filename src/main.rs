@@ -50,5 +50,5 @@ fn hash_object(file_name: &str) {
     hasher.update(store.as_bytes());
     let res = hasher.finalize();
     println!("{:?}", res);
-    println!("{:?}", hex::decode(res));
+    println!("{:?}", hex::encode(res));
 }
