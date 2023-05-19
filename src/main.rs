@@ -55,4 +55,5 @@ fn hash_object(file_name: &str) {
     fs::create_dir(format!("./.git/objects/{}", dir_name)).unwrap();
     let path = format!("./.git/objects/{}/{}", dir_name, file_name);
     fs::write(path, content).unwrap();
+    print!("{}", blob_sha);
 }
