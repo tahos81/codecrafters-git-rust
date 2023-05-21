@@ -1,12 +1,9 @@
-use flate2::read::ZlibDecoder;
-use flate2::write::ZlibEncoder;
-use flate2::Compression;
-use hex;
+use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use sha1::{Digest, Sha1};
-use std::env;
-use std::fs;
-use std::io::Read;
-use std::io::Write;
+use std::{
+    env, fs,
+    io::{Read, Write},
+};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -21,7 +18,7 @@ fn main() {
             let file_name = args[3].as_str();
             hash_object(file_name);
         }
-        _ => println!("unknown command: {}", command),
+        _ => println!("unknown command: {command}"),
     }
 }
 
@@ -36,7 +33,7 @@ fn init() {
 fn cat_file(blob_sha: &str) {
     let dir_name = &blob_sha[..2];
     let file_name = &blob_sha[2..];
-    let path = format!("./.git/objects/{}/{}", dir_name, file_name);
+    let path = format!("./.git/objects/{dir_name}/{file_name}");
     let data = fs::read(path).unwrap();
     let mut dec = ZlibDecoder::new(data.as_slice());
     let mut result = String::new();
@@ -48,19 +45,18 @@ fn cat_file(blob_sha: &str) {
 fn hash_object(file_name: &str) {
     let content = fs::read_to_string("./".to_string() + file_name).unwrap();
     let header = format!("blob {}\x00", content.len());
-    let store = format!("{}{}", header, content);
-    //print!("{}", store);
+    let store = format!("{header}{content}");
     let mut hasher = Sha1::new();
     hasher.update(store.as_bytes());
     let res = hasher.finalize();
     let blob_sha = hex::encode(res);
     let dir_name = &blob_sha[..2];
     let file_name = &blob_sha[2..];
-    fs::create_dir(format!("./.git/objects/{}", dir_name)).unwrap();
-    let path = format!("./.git/objects/{}/{}", dir_name, file_name);
+    fs::create_dir(format!("./.git/objects/{dir_name}")).unwrap();
+    let path = format!("./.git/objects/{dir_name}/{file_name}");
     let mut enc = ZlibEncoder::new(Vec::new(), Compression::default());
     enc.write_all(store.as_bytes()).unwrap();
     let enc_store = enc.finish().unwrap();
     fs::write(path, enc_store).unwrap();
-    print!("{}", blob_sha);
+    print!("{blob_sha}");
 }
