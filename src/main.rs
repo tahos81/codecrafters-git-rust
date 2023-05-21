@@ -1,24 +1,69 @@
+use clap::{Parser, Subcommand};
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use sha1::{Digest, Sha1};
 use std::{
-    env, fs,
+    fs,
     io::{Read, Write},
+    process,
 };
 
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+#[command(propagate_version = true)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Initialise a new repository
+    Init,
+
+    /// Provide content or type and size information for repository objects
+    CatFile {
+        /// Pretty print the object
+        #[arg(short)]
+        pretty_print: bool,
+
+        /// The object to cat
+        blob_sha: String,
+    },
+    HashObject {
+        /// Actually write the object into the object database
+        #[arg(short)]
+        write: bool,
+
+        ///
+        file_name: String,
+    },
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let command = args[1].as_str();
-    match command {
-        "init" => init(),
-        "cat-file" => {
-            let blob_sha = args[3].as_str();
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::Init => {
+            init();
+        }
+        Commands::CatFile {
+            pretty_print,
+            blob_sha,
+        } => {
+            if !pretty_print {
+                eprintln!("The `-p` flag is required");
+                process::exit(1);
+            }
+
             cat_file(blob_sha);
         }
-        "hash-object" => {
-            let file_name = args[3].as_str();
+        Commands::HashObject { write, file_name } => {
+            if !write {
+                eprintln!("The `-w` flag is required");
+                process::exit(1);
+            }
             hash_object(file_name);
         }
-        _ => println!("unknown command: {command}"),
     }
 }
 
