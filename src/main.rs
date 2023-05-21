@@ -1,9 +1,12 @@
 use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use hex;
 use sha1::{Digest, Sha1};
 use std::env;
 use std::fs;
 use std::io::Read;
+use std::io::Write;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -44,7 +47,7 @@ fn cat_file(blob_sha: &str) {
 
 fn hash_object(file_name: &str) {
     let content = fs::read_to_string("./".to_string() + file_name).unwrap();
-    let header = format!("blob {}\0", content.len());
+    let header = format!("blob {}\x00", content.len());
     let store = format!("{}{}", header, content);
     //print!("{}", store);
     let mut hasher = Sha1::new();
@@ -55,6 +58,9 @@ fn hash_object(file_name: &str) {
     let file_name = &blob_sha[2..];
     fs::create_dir(format!("./.git/objects/{}", dir_name)).unwrap();
     let path = format!("./.git/objects/{}/{}", dir_name, file_name);
-    fs::write(path, content).unwrap();
+    let mut enc = ZlibEncoder::new(Vec::new(), Compression::default());
+    enc.write_all(store.as_bytes()).unwrap();
+    let enc_store = enc.finish().unwrap();
+    fs::write(path, enc_store).unwrap();
     print!("{}", blob_sha);
 }
