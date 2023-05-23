@@ -1,107 +1,56 @@
-use clap::{Parser, Subcommand};
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use sha1::{Digest, Sha1};
-use std::{
-    fs,
-    io::{Read, Write},
-    process,
-};
+use anyhow::{anyhow, Result};
+use cat_file::pretty_cat_file;
+use clap::Parser;
+use cli::{Cli, Commands};
+use hash_object::hash_object_write;
+use ls_tree::ls_tree_name_only;
+use std::fs;
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-#[command(propagate_version = true)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
+mod cat_file;
+mod cli;
+mod hash_object;
+mod ls_tree;
+mod object;
 
-#[derive(Subcommand)]
-enum Commands {
-    /// Initialise a new repository
-    Init,
-
-    /// Provide content or type and size information for repository objects
-    CatFile {
-        /// Pretty print the object
-        #[arg(short)]
-        pretty_print: bool,
-
-        /// The object to cat
-        blob_sha: String,
-    },
-    HashObject {
-        /// Actually write the object into the object database
-        #[arg(short)]
-        write: bool,
-
-        ///
-        file_name: String,
-    },
-}
-
-fn main() {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Init => {
-            init();
+            init()?;
         }
         Commands::CatFile {
             pretty_print,
             blob_sha,
         } => {
             if !pretty_print {
-                eprintln!("The `-p` flag is required");
-                process::exit(1);
+                return Err(anyhow!("The `-p` flag is required"));
             }
 
-            cat_file(blob_sha);
+            pretty_cat_file(blob_sha)?;
         }
-        Commands::HashObject { write, file_name } => {
+        Commands::HashObject { write, path } => {
             if !write {
-                eprintln!("The `-w` flag is required");
-                process::exit(1);
+                return Err(anyhow!("The `-w` flag is required"));
             }
-            hash_object(file_name);
+            hash_object_write(path);
+        }
+        Commands::LsTree { name_only, tree } => {
+            if !name_only {
+                return Err(anyhow!("The `--name-only` flag is required"));
+            }
+            ls_tree_name_only(tree)?;
         }
     }
+
+    Ok(())
 }
 
-fn init() {
-    fs::create_dir(".git").unwrap();
-    fs::create_dir(".git/objects").unwrap();
-    fs::create_dir(".git/refs").unwrap();
-    fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
-    println!("Initialized git directory")
-}
-
-fn cat_file(blob_sha: &str) {
-    let dir_name = &blob_sha[..2];
-    let file_name = &blob_sha[2..];
-    let path = format!("./.git/objects/{dir_name}/{file_name}");
-    let data = fs::read(path).unwrap();
-    let mut dec = ZlibDecoder::new(data.as_slice());
-    let mut result = String::new();
-    dec.read_to_string(&mut result).unwrap();
-    let header_index = result.find('\0').unwrap();
-    print!("{}", &result[header_index + 1..]);
-}
-
-fn hash_object(file_name: &str) {
-    let content = fs::read_to_string("./".to_string() + file_name).unwrap();
-    let header = format!("blob {}\x00", content.len());
-    let store = format!("{header}{content}");
-    let mut hasher = Sha1::new();
-    hasher.update(store.as_bytes());
-    let res = hasher.finalize();
-    let blob_sha = hex::encode(res);
-    let dir_name = &blob_sha[..2];
-    let file_name = &blob_sha[2..];
-    fs::create_dir(format!("./.git/objects/{dir_name}")).unwrap();
-    let path = format!("./.git/objects/{dir_name}/{file_name}");
-    let mut enc = ZlibEncoder::new(Vec::new(), Compression::default());
-    enc.write_all(store.as_bytes()).unwrap();
-    let enc_store = enc.finish().unwrap();
-    fs::write(path, enc_store).unwrap();
-    print!("{blob_sha}");
+fn init() -> Result<()> {
+    fs::create_dir(".git")?;
+    fs::create_dir(".git/objects")?;
+    fs::create_dir(".git/refs")?;
+    fs::write(".git/HEAD", "ref: refs/heads/master\n")?;
+    println!("Initialized git directory");
+    Ok(())
 }
