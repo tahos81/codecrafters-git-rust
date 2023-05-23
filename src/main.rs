@@ -33,7 +33,7 @@ fn main() -> Result<()> {
             if !write {
                 return Err(anyhow!("The `-w` flag is required"));
             }
-            hash_object_write(path);
+            hash_object_write(path)?;
         }
         Commands::LsTree { name_only, tree } => {
             if !name_only {
