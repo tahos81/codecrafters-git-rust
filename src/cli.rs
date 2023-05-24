@@ -43,4 +43,6 @@ pub enum Commands {
         /// The id of a tree
         tree: String,
     },
+
+    WriteTree,
 }

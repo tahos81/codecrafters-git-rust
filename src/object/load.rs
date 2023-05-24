@@ -1,3 +1,4 @@
+use crate::object::GitObject;
 use anyhow::{anyhow, Result};
 use flate2::bufread::ZlibDecoder;
 use std::{
@@ -5,20 +6,6 @@ use std::{
     io::{BufRead, BufReader, Read},
     path::{Path, PathBuf},
 };
-
-pub struct GitObject {
-    pub object_type: String,
-    pub content: Vec<u8>,
-}
-
-impl GitObject {
-    pub fn new(object_type: String, content: Vec<u8>) -> Self {
-        Self {
-            object_type,
-            content,
-        }
-    }
-}
 
 pub fn load_object(blob_sha: &str) -> Result<GitObject> {
     if blob_sha.len() != 40 {

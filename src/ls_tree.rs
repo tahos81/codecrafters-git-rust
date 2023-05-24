@@ -42,8 +42,8 @@ fn print_names(content: Vec<u8>) -> Result<()> {
         let file_name = String::from_utf8(buffer)?;
 
         reader.seek_relative(20)?;
-
         println!("{file_name}");
     }
+
     Ok(())
 }

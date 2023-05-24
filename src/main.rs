@@ -5,12 +5,14 @@ use cli::{Cli, Commands};
 use hash_object::hash_object_write;
 use ls_tree::ls_tree_name_only;
 use std::fs;
+use write_tree::write_tree;
 
 mod cat_file;
 mod cli;
 mod hash_object;
 mod ls_tree;
 mod object;
+mod write_tree;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -33,13 +35,18 @@ fn main() -> Result<()> {
             if !write {
                 return Err(anyhow!("The `-w` flag is required"));
             }
-            hash_object_write(path)?;
+            let blob_sha = hash_object_write(path)?;
+            println!("{blob_sha}");
         }
         Commands::LsTree { name_only, tree } => {
             if !name_only {
                 return Err(anyhow!("The `--name-only` flag is required"));
             }
             ls_tree_name_only(tree)?;
+        }
+        Commands::WriteTree => {
+            let blob_sha = write_tree(".")?;
+            println!("{blob_sha}")
         }
     }
 
