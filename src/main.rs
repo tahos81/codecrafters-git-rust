@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use cat_file::pretty_cat_file;
 use clap::Parser;
 use cli::{Cli, Commands};
+use commit_tree::commit_tree;
 use hash_object::hash_object_write;
 use ls_tree::ls_tree_name_only;
 use std::fs;
@@ -9,6 +10,7 @@ use write_tree::write_tree;
 
 mod cat_file;
 mod cli;
+mod commit_tree;
 mod hash_object;
 mod ls_tree;
 mod object;
@@ -46,7 +48,15 @@ fn main() -> Result<()> {
         }
         Commands::WriteTree => {
             let blob_sha = write_tree(".")?;
-            println!("{blob_sha}")
+            println!("{blob_sha}");
+        }
+        Commands::CommitTree {
+            parent_sha,
+            message,
+            tree_sha,
+        } => {
+            let commit_sha = commit_tree(tree_sha, parent_sha, message)?;
+            println!("{commit_sha}");
         }
     }
 

@@ -44,5 +44,16 @@ pub enum Commands {
         tree: String,
     },
 
+    /// Creates a tree object
     WriteTree,
+
+    CommitTree {
+        #[arg(short)]
+        parent_sha: String,
+
+        #[arg(short)]
+        message: String,
+
+        tree_sha: String,
+    },
 }
